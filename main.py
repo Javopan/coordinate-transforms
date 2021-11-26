@@ -1,19 +1,30 @@
-from coordinate_transform import parse_text
+from coordinate_transform import parse_text, transform
+from kml_parser import kml_process
 
 # Press the green button in the gutter to run the script.
+eventos = {
+        'transform': transform,
+        '1': transform,
+        'kmz': kml_process,
+        '2': kml_process,
+    }
+
 if __name__ == '__main__':
-    coor_input = input('coordenadas a convertir: ')
-    coordenadas = parse_text(coor_input, r'(\d{1,3}).(\d{1,2}).(\d{1,2}\.\d{1,3}).?([NSEWOnseow])?')
-    if coordenadas.lastindex >= 3:
-        c1 = float(coordenadas[1])
-        c2 = float(coordenadas[2])
-        c3 = float(coordenadas[3])
-        c4 = coordenadas[4].lower()
-        # adds a negative symbols if it is west or south
-        c_decimal = c1 + c2/60 + c3/3600
-        if c4 == 's' or c4 == 'w' or c4 =='o':
-            c_decimal *= -1
-        print(c_decimal)
+    print('Welcome to Javopan handy tools.')
+    print('please select one of the following functions or number:\n')
+    print('\t1- transform: changes coordinates from DMS to Decimal degree')
+    print('\t2- kmz: parses a kmz/kml file to extract placemakrs and coordines of it')
+    print('\t0- x: quits the program')
+    print()
+    event = -1
+    while event != 'x':
+        event = input('What program do you want to use:')
+        try:
+            eventos[event]()
+        except:
+            print('Please a select valid option')
+    print('Thanks for using my tools')
+
 
 
 
