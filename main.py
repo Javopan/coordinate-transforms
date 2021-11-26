@@ -14,6 +14,7 @@ if __name__ == '__main__':
         if c4 == 's' or c4 == 'w' or c4 =='o':
             c_decimal *= -1
         print(c_decimal)
+        print('Done')
 
 
 
