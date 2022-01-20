@@ -5,8 +5,6 @@ from haversine import haversine_vector, Unit
 import pandas as pd
 
 
-
-
 def kml_parse():
     """
     Parses a KMZ or KML file to get all the placemarks in a file and returns a matrix on the format
@@ -70,9 +68,8 @@ def kml_process():
     points_a = pd.DataFrame(kml_points)
     points_b = pd.DataFrame(kml_points)
 
-    points_a_clean = points_a.drop([0,3], axis=1).astype('float')
-    points_b_clean = points_b.drop([0,3], axis=1).astype('float')
-
+    points_a_clean = points_a.drop([0, 3], axis=1).astype('float')
+    points_b_clean = points_b.drop([0, 3], axis=1).astype('float')
 
     link_matrix = pd.DataFrame(haversine_vector(points_a_clean, points_b_clean, Unit.KILOMETERS, comb=True),
                                columns=list(points_a[0]),
