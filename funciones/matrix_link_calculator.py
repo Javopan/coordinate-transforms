@@ -19,10 +19,28 @@ def calculate_matrix(pops, sites, distance_threshold):
     else:
         df_pops = pd.read_csv(pops)
 
+    # habilitamos un check para columnas extendidas
+    max_height_pop = False
+    if 'Max Height' in df_pops.columns:
+        max_height_pop = True
+
+    min_height_pop = False
+    if 'Min Height' in df_pops.columns:
+        min_height_pop = True
+
     if 'xlsx' in sites:
         df_sites = pd.read_excel(sites)
     else:
         df_sites = pd.read_csv(sites)
+
+    # habilitamos un check para columnas extendidas
+    max_height_sites = False
+    if 'Max Height' in df_sites.columns:
+        max_height_sites = True
+
+    min_height_sites = False
+    if 'Min Height' in df_sites.columns:
+        min_height_sites = True
 
     max_distance = distance_threshold
 
@@ -38,18 +56,28 @@ def calculate_matrix(pops, sites, distance_threshold):
         lati = row[1]['Latitude']
         long = row[1]['Longitude']
         h = row[1]['Height']
+        if max_height_pop:
+            max_h = row[1]['Max Height']
+        if min_height_pop:
+            min_h = row[1]['Min Height']
         pops_list.append((lati, long))
         if name not in all_dict:
-            all_dict[name] = {'lat': lati, 'lon': long, 'hei': h}
+            all_dict[name] = {'lat': lati, 'lon': long, 'hei': h, 'max h': max_h if max_height_pop else 1000,
+                              'min h': min_h if min_height_pop else 1}
 
     for row in df_sites.iterrows():
         name = row[1]['Node Name']
         lati = row[1]['Latitude']
         long = row[1]['Longitude']
         h = row[1]['Height']
+        if max_height_sites:
+            max_h = row[1]['Max Height']
+        if min_height_sites:
+            min_h = row[1]['Min Height']
         site_list.append((lati, long))
         if name not in all_dict:
-            all_dict[name] = {'lat': lati, 'lon': long, 'hei': h}
+            all_dict[name] = {'lat': lati, 'lon': long, 'hei': h, 'max h': max_h if max_height_sites else 1000,
+                              'min h': min_h if min_height_sites else 1}
 
     # Calculamos el haversine en matriz. las columnas son los POPS los renglones son los
     # sites

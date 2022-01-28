@@ -6,26 +6,14 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>703</width>
-    <height>584</height>
+    <width>685</width>
+    <height>741</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Form</string>
   </property>
   <layout class="QGridLayout" name="gridLayout">
-   <item row="0" column="0">
-    <widget class="QPushButton" name="bnt_load_pops">
-     <property name="font">
-      <font>
-       <pointsize>12</pointsize>
-      </font>
-     </property>
-     <property name="text">
-      <string>Load POPS</string>
-     </property>
-    </widget>
-   </item>
    <item row="1" column="0">
     <widget class="QPushButton" name="bnt_load_nodes">
      <property name="font">
@@ -35,36 +23,6 @@
      </property>
      <property name="text">
       <string>Load Nodes</string>
-     </property>
-    </widget>
-   </item>
-   <item row="2" column="0">
-    <widget class="QLabel" name="lbl_apikey">
-     <property name="font">
-      <font>
-       <pointsize>12</pointsize>
-      </font>
-     </property>
-     <property name="styleSheet">
-      <string notr="true">color: rgb(50, 175, 74);</string>
-     </property>
-     <property name="text">
-      <string>Google API Key</string>
-     </property>
-    </widget>
-   </item>
-   <item row="3" column="0" colspan="2">
-    <widget class="QLabel" name="lbl_threshold">
-     <property name="font">
-      <font>
-       <pointsize>12</pointsize>
-      </font>
-     </property>
-     <property name="styleSheet">
-      <string notr="true">color: rgb(50, 175, 74);</string>
-     </property>
-     <property name="text">
-      <string>Threshold Distance</string>
      </property>
     </widget>
    </item>
@@ -164,6 +122,27 @@
         </property>
         <property name="text">
          <string>with images</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QCheckBox" name="chk_alllos">
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
+        <property name="font">
+         <font>
+          <pointsize>12</pointsize>
+         </font>
+        </property>
+        <property name="toolTip">
+         <string>If enable the output will have all the links, with and without LoS. </string>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">color: rgb(50, 175, 74);</string>
+        </property>
+        <property name="text">
+         <string>All Links</string>
         </property>
        </widget>
       </item>
@@ -303,18 +282,19 @@
      </layout>
     </widget>
    </item>
-   <item row="4" column="0" colspan="5">
-    <widget class="QTreeWidget" name="tbl_linksmatrix">
+   <item row="2" column="0">
+    <widget class="QLabel" name="lbl_apikey">
      <property name="font">
       <font>
        <pointsize>12</pointsize>
       </font>
      </property>
-     <column>
-      <property name="text">
-       <string notr="true">1</string>
-      </property>
-     </column>
+     <property name="styleSheet">
+      <string notr="true">color: rgb(50, 175, 74);</string>
+     </property>
+     <property name="text">
+      <string>Google API Key</string>
+     </property>
     </widget>
    </item>
    <item row="0" column="1" colspan="3">
@@ -329,15 +309,44 @@
      </property>
     </widget>
    </item>
-   <item row="1" column="1" colspan="3">
-    <widget class="QLineEdit" name="txt_load_nodes">
-     <property name="enabled">
-      <bool>false</bool>
-     </property>
+   <item row="4" column="0" colspan="5">
+    <widget class="QTreeWidget" name="tbl_linksmatrix">
      <property name="font">
       <font>
        <pointsize>12</pointsize>
       </font>
+     </property>
+     <column>
+      <property name="text">
+       <string notr="true">1</string>
+      </property>
+     </column>
+    </widget>
+   </item>
+   <item row="3" column="0" colspan="2">
+    <widget class="QLabel" name="lbl_threshold">
+     <property name="font">
+      <font>
+       <pointsize>12</pointsize>
+      </font>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">color: rgb(50, 175, 74);</string>
+     </property>
+     <property name="text">
+      <string>Threshold Distance</string>
+     </property>
+    </widget>
+   </item>
+   <item row="0" column="0">
+    <widget class="QPushButton" name="bnt_load_pops">
+     <property name="font">
+      <font>
+       <pointsize>12</pointsize>
+      </font>
+     </property>
+     <property name="text">
+      <string>Load POPS</string>
      </property>
     </widget>
    </item>
@@ -353,39 +362,6 @@
      </property>
      <property name="placeholderText">
       <string>Google Elevation API Key</string>
-     </property>
-    </widget>
-   </item>
-   <item row="3" column="2">
-    <widget class="QDoubleSpinBox" name="spn_distance">
-     <property name="font">
-      <font>
-       <pointsize>12</pointsize>
-      </font>
-     </property>
-     <property name="toolTip">
-      <string>Distance threshold to consider it a link</string>
-     </property>
-     <property name="frame">
-      <bool>false</bool>
-     </property>
-     <property name="alignment">
-      <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-     </property>
-     <property name="suffix">
-      <string> km</string>
-     </property>
-     <property name="decimals">
-      <number>3</number>
-     </property>
-     <property name="minimum">
-      <double>0.040000000000000</double>
-     </property>
-     <property name="maximum">
-      <double>100.000000000000000</double>
-     </property>
-     <property name="value">
-      <double>5.000000000000000</double>
      </property>
     </widget>
    </item>
@@ -423,6 +399,51 @@
        <width>16777215</width>
        <height>134</height>
       </size>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="1" colspan="3">
+    <widget class="QLineEdit" name="txt_load_nodes">
+     <property name="enabled">
+      <bool>false</bool>
+     </property>
+     <property name="font">
+      <font>
+       <pointsize>12</pointsize>
+      </font>
+     </property>
+    </widget>
+   </item>
+   <item row="3" column="2">
+    <widget class="QDoubleSpinBox" name="spn_distance">
+     <property name="font">
+      <font>
+       <pointsize>12</pointsize>
+      </font>
+     </property>
+     <property name="toolTip">
+      <string>Distance threshold to consider it a link</string>
+     </property>
+     <property name="frame">
+      <bool>false</bool>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+     </property>
+     <property name="suffix">
+      <string> km</string>
+     </property>
+     <property name="decimals">
+      <number>3</number>
+     </property>
+     <property name="minimum">
+      <double>0.040000000000000</double>
+     </property>
+     <property name="maximum">
+      <double>100.000000000000000</double>
+     </property>
+     <property name="value">
+      <double>5.000000000000000</double>
      </property>
     </widget>
    </item>

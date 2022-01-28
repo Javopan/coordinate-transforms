@@ -4,7 +4,7 @@ from PyQt6.QtWidgets import QWidget, QTreeWidgetItem
 from gui.MatrixCalculator import Ui_MatrixCalculator
 from funciones.pyqt_functions import open_dialog, log_message
 from funciones.matrix_link_calculator import calculate_matrix, write_to_excel
-from funciones.google_profile import get_profile, check_los, save_graph
+from funciones.google_profile import get_profile, check_los, save_graph, find_best_height
 import os
 import pickle
 
@@ -26,7 +26,7 @@ class MatrixCalculator(QWidget, Ui_MatrixCalculator):
         # Treewidget setup
         self.tbl_linksmatrix.setColumnCount(8)
         # Labels for the trees
-        self.tbl_linksmatrix.setHeaderLabels(['Sites', 'Target', 'Lat', 'Lon', 'Height', 'Distance',
+        self.tbl_linksmatrix.setHeaderLabels(['Sites', 'Target', 'Lat', 'Lon', 'Distance', 'Height', 'Max. Height',
                                               'Azimuth', 'Rev. Azimuth'])
 
         # click actions
@@ -38,7 +38,7 @@ class MatrixCalculator(QWidget, Ui_MatrixCalculator):
         self.bnt_loadprofiles.clicked.connect(self.load_los)
         self.bnt_calculatelos_all.clicked.connect(self.calculate_los_all)
         self.bnt_calculatelos_single.clicked.connect(self.calculate_los)
-        self.bnt_generatekml.clicked.connect(self.printpdf)
+        self.bnt_generatekml.clicked.connect(self.generate_kml)
         self.bnt_save_excel.clicked.connect(self.save_excel)
         self.tbl_linksmatrix.doubleClicked.connect(self.expand_table)
         self.btn_optimize_heights.clicked.connect(self.optimize_heights)
@@ -47,7 +47,31 @@ class MatrixCalculator(QWidget, Ui_MatrixCalculator):
         self.pops_f = None
         self.sites_f = None
 
-    def optimize_heights(self):
+    def generate_kml(self):
+        print('Generar un KML')
+
+    def optimize_heights(self, single=True):
+        if single:
+            if self.single_profile:
+                tree_line = self.tbl_linksmatrix.selectedItems()
+                parent = tree_line[0].parent() if tree_line else None
+                if parent:
+                    target_name = tree_line[0].text(1)
+                    target_hei = tree_line[0].text(4)
+                    parent_name = parent.text(0)
+                    parent_hei = parent.text(4)
+                    link_distance = tree_line[0].text(5)
+                    link_distance = float(link_distance[:link_distance.rfind(' km')])
+
+                    find_best_height(self.single_profile, parent_hei, target_hei, parent_name, target_name,
+                                     link_distance, 50, 50)
+
+                else:
+                    log_message(self.lst_log, 'Select a child of a site.')
+            else:
+                log_message(self.lst_log, 'No elevation profile found. Get it first')
+        else:
+            pass
         print('Optimize')
 
     def get_profile_all(self):
@@ -72,6 +96,11 @@ class MatrixCalculator(QWidget, Ui_MatrixCalculator):
                 log_message(self.lst_log, f'created file {filename}')
             log_message(self.lst_log, 'Done fetching profiles')
             self.btn_optimize_heights.setEnabled(True)
+            self.bnt_calculatelos_single.setEnabled(True)
+            self.bnt_calculatelos_all.setEnabled(True)
+            self.chk_images_all.setEnabled(True)
+            self.chk_images_single.setEnabled(True)
+            self.chk_alllos.setEnabled(True)
         else:
             log_message(self.lst_log, 'Please enter a correct API key of 39 characters')
 
@@ -81,7 +110,8 @@ class MatrixCalculator(QWidget, Ui_MatrixCalculator):
         log_message(self.lst_log, 'Fetching profiles...')
         if not key == '' and len(key) == 39:
             tree_line = self.tbl_linksmatrix.selectedItems()
-            if tree_line and tree_line[0].parent().text(0) in self.all_sites:
+            parent = tree_line[0].parent() if tree_line else None
+            if parent:
                 target_lat = tree_line[0].text(2)
                 target_lon = tree_line[0].text(3)
                 parent_lat = tree_line[0].parent().text(2)
@@ -92,6 +122,11 @@ class MatrixCalculator(QWidget, Ui_MatrixCalculator):
                 self.single_profile = profile
                 log_message(self.lst_log, 'Profile fetched')
                 self.btn_optimize_heights.setEnabled(True)
+                self.bnt_calculatelos_single.setEnabled(True)
+                self.chk_images_single.setEnabled(True)
+                self.chk_alllos.setEnabled(True)
+            else:
+                log_message(self.lst_log, 'Select a child of a site.')
         else:
             log_message(self.lst_log, 'Please enter a correct API key of 39 characters')
 
@@ -108,25 +143,17 @@ class MatrixCalculator(QWidget, Ui_MatrixCalculator):
         start_check = self.dict_links
         if file:
             with open(file[0], 'rb') as file:
-                self.dict_links = pickle.load(file)
+                if not start_check:  # the loading is new
+                    self.dict_links = pickle.load(file)
+                else:  # we already have a self.dict. we just need to add the profiles loaded
+                    temp_dict = pickle.load(file)
+                    for site, connections in self.dict_links.items():
+                        for element in connections:
+                            if isinstance(self.dict_links[site][element], tuple):
+                                self.dict_links[site][element] += (temp_dict[site][element][6],)
+                    temp_dict = None
             if not start_check:  # there is nothing loaded we will recreate everything from the profile path
-                tree_items = []
-                for site, links in self.dict_links.items():
-                    site_item = QTreeWidgetItem([site, '', f'{self.dict_links[site]["lat"]}',
-                                                 f'{self.dict_links[site]["lon"]}', f'{self.dict_links[site]["hei"]}'])
-                    for target, link in links.items():
-                        if (target == 'lat' and isinstance(link, float)) or (
-                                target == 'lon' and isinstance(link, float)) \
-                                or (target == 'hei' and isinstance(link, float)):
-                            continue
-                        target_item = QTreeWidgetItem(['', target,
-                                                       f'{link[0]}', f'{link[1]}', f'{link[2]}',  # lat lon height
-                                                       f'{round(link[3], 2)} km',
-                                                       f'{round(link[4], 2)} °',
-                                                       f'{round(link[5], 2)} °'])
-                        site_item.addChild(target_item)
-                    tree_items.append(site_item)
-                self.tbl_linksmatrix.insertTopLevelItems(0, tree_items)
+                self.populate_tree_widget()
                 log_message(self.lst_log, 'Calculation matrix reconstructed from profile data. Loaded success.')
                 log_message(self.lst_log, f'{len(self.dict_links)} sites connected')
             else:  # there was already calculated only send message that all was good
@@ -140,6 +167,7 @@ class MatrixCalculator(QWidget, Ui_MatrixCalculator):
             self.bnt_generatekml.setEnabled(True)
             self.chk_images_all.setEnabled(True)
             self.chk_images_single.setEnabled(True)
+            self.chk_alllos.setEnabled(True)
 
     def calculate_los_all(self):
         timing_start = datetime.now()
@@ -155,7 +183,8 @@ class MatrixCalculator(QWidget, Ui_MatrixCalculator):
                 if profile:
                     los, graph = check_los(profile, self.dict_links[start]['hei'], self.dict_links[start][target][2],
                                            start, target, distance, image=self.chk_images_all.isChecked())
-                if not los:
+                    # todo remove this line # we need to add another checkmark with and without LoS
+                if not los[0][0]:
                     del dict_links_copy[start][target]
                     log_message(self.lst_log, f'removed link {target}')
                     if len(dict_links_copy[start]) < 4:
@@ -172,24 +201,7 @@ class MatrixCalculator(QWidget, Ui_MatrixCalculator):
 
         self.dict_links = dict_links_copy
 
-        tree_items = []
-        self.tbl_linksmatrix.clear()
-
-        for site, links in self.dict_links.items():
-            site_item = QTreeWidgetItem([site, '', f'{self.dict_links[site]["lat"]}',
-                                         f'{self.dict_links[site]["lon"]}', f'{self.dict_links[site]["hei"]}'])
-            for target, link in links.items():
-                if (target == 'lat' and isinstance(link, float)) or (target == 'lon' and isinstance(link, float)) \
-                        or (target == 'hei' and isinstance(link, float)):
-                    continue
-                target_item = QTreeWidgetItem(['', target,
-                                               f'{link[0]}', f'{link[1]}', f'{link[2]}',  # lat lon height
-                                               f'{round(link[3], 2)} km',
-                                               f'{round(link[4], 2)} °',
-                                               f'{round(link[5], 2)} °'])
-                site_item.addChild(target_item)
-            tree_items.append(site_item)
-        self.tbl_linksmatrix.insertTopLevelItems(0, tree_items)
+        self.populate_tree_widget()
         timing_end = datetime.now() - timing_start
         message = f'tree updated - It took {timing_end}'
         log_message(self.lst_log, message)
@@ -203,6 +215,7 @@ class MatrixCalculator(QWidget, Ui_MatrixCalculator):
             target = tree_line[0].text(1)
             start = parent.text(0)
             distance = tree_line[0].text(5)
+            distance = float(distance[:distance.rfind(' km')])
             profile = self.dict_links[start][target][6]
             if profile:
                 #  los is a tuple with 2 values 1 True/False if there is LoS. If True then 2 will have the graph
@@ -270,32 +283,15 @@ class MatrixCalculator(QWidget, Ui_MatrixCalculator):
         if self.pops_f and self.sites_f:
             self.dict_links, self.all_sites, self.pops, self.targets = calculate_matrix(self.pops_f, self.sites_f,
                                                                                         self.spn_distance.value())
-            tree_items = []
-            for site, links in self.dict_links.items():
-                site_item = QTreeWidgetItem([site, '', f'{self.dict_links[site]["lat"]}',
-                                             f'{self.dict_links[site]["lon"]}', f'{self.dict_links[site]["hei"]}'])
-                for target, link in links.items():
-                    if (target == 'lat' and isinstance(link, float)) or (target == 'lon' and isinstance(link, float))\
-                            or (target == 'hei' and isinstance(link, float)):
-                        continue
-                    target_item = QTreeWidgetItem(['', target,
-                                                   f'{link[0]}', f'{link[1]}', f'{link[2]}',  # lat lon height
-                                                   f'{round(link[3],2)} km',
-                                                   f'{round(link[4],2)} °',
-                                                   f'{round(link[5],2)} °'])
-                    site_item.addChild(target_item)
-                tree_items.append(site_item)
-            self.tbl_linksmatrix.insertTopLevelItems(0, tree_items)
+
+            self.populate_tree_widget()
+
             message = f'{len(self.dict_links)} / {self.targets} sites were connected'
             log_message(self.lst_log, message)
             # activate extended controls
             self.bnt_getprofiles.setEnabled(True)
             self.bnt_getprofile.setEnabled(True)
-            self.bnt_calculatelos_all.setEnabled(True)
-            self.bnt_calculatelos_single.setEnabled(True)
             self.bnt_generatekml.setEnabled(True)
-            self.chk_images_all.setEnabled(True)
-            self.chk_images_single.setEnabled(True)
         else:
             if self.pops_f:
                 log_message(self.lst_log, 'Load a Nodes file.')
@@ -303,4 +299,25 @@ class MatrixCalculator(QWidget, Ui_MatrixCalculator):
                 log_message(self.lst_log, 'Load a Pops file.')
             else:
                 log_message(self.lst_log, 'Load Pops and Nodes file.')
+
+    def populate_tree_widget(self):
+        tree_items = []
+        for site, links in self.dict_links.items():
+            site_item = QTreeWidgetItem([site, '', f'{self.dict_links[site]["lat"]}',
+                                         f'{self.dict_links[site]["lon"]}', f'{self.dict_links[site]["hei"]}'])
+            for target, link in links.items():
+                if (target == 'lat' and isinstance(link, float)) or (target == 'lon' and isinstance(link, float)) \
+                        or (target == 'hei' and isinstance(link, float)):
+                    continue
+                target_item = QTreeWidgetItem(['', target,
+                                               f'{link[0]}', f'{link[1]}', f'{link[2]}',  # lat lon height
+                                               f'{round(link[3], 2)} km',
+                                               f'{round(link[4], 2)} °',
+                                               f'{round(link[5], 2)} °'])
+                site_item.addChild(target_item)
+            tree_items.append(site_item)
+        self.tbl_linksmatrix.insertTopLevelItems(0, tree_items)
+
+
+
 
